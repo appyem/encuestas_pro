@@ -5,7 +5,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import AdminLogin from './components/AdminLogin';
 import AdminPanel from './components/AdminPanel';
-import PublicVoting from './components/PublicVoting';
 import PublicVotingWrapper from './components/PublicVotingWrapper';
 
 export default function App() {
@@ -31,15 +30,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Ruta pública con ID único */}
+        {/* ✅ Ruta pública: SOLO accesible con ID */}
         <Route path="/encuesta/:pollId" element={<PublicVotingWrapper />} />
 
-        {/* Ruta raíz: redirige a la primera encuesta activa (opcional) */}
+        {/* ✅ Ruta raíz: redirige al login de admin */}
         <Route
           path="/"
-          element={
-            <PublicVoting pollIdFromRoute={null} />
-          }
+          element={!user ? <AdminLogin /> : <Navigate to="/admin" />}
         />
 
         {/* Rutas de administración */}
