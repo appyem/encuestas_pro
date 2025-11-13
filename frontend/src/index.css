@@ -1,0 +1,93 @@
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fondo oscuro global */
+body {
+  @apply bg-gray-900 text-white;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Variables de color neón */
+:root {
+  --color-neonPink: #ff00ff;
+  --color-neonBlue: #00ffff;
+  --color-neonGreen: #00ff00;
+  --color-neonYellow: #ffff00;
+  --color-neonPurple: #bf00ff;
+  --color-neonRed: #ff0055;
+  --color-neonCyan: #00ffff;
+  --color-neonLime: #ccff00;
+  --color-neonOrange: #ff6600;
+  --color-neonMagenta: #ff00cc;
+  --color-neonTeal: #00ffcc;
+  --color-neonIndigo: #4b00ff;
+  --color-neonCoral: #ff5252;
+  --color-neonEmerald: #50c878;
+  --color-neonSky: #87ceeb;
+  --color-neonPlum: #dda0dd;
+  --color-neonGold: #ffd700;
+  --color-neonSilver: #c0c0c0;
+  --color-greenDark: #008000;
+  --color-greenLight: #90ee90;
+  --color-blueLight: #add8e6;
+  --color-red: #ff0000;
+}
+
+/* Animaciones */
+.neon-pulse h1 {
+  animation: neonPulse 1.8s infinite alternate;
+}
+
+@keyframes neonPulse {
+  from {
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(0, 255, 0, 1), 0 0 30px rgba(0, 255, 0, 0.8);
+  }
+}
+
+.neon-border {
+  border: 2px solid var(--color-neonPink);
+  box-shadow: 0 0 12px var(--color-neonPink);
+}
+
+.neon-glow {
+  box-shadow: 0 0 15px var(--color-neonBlue), 0 0 25px var(--color-neonBlue);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Scroll suave y oculto en modo móvil */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Evitar selección accidental en botones */
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reseteo de foco para inputs más limpio */
+input:focus,
+button:focus {
+  outline: none;
+}
