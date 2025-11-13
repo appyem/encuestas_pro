@@ -16,7 +16,9 @@ import CreatePollForm from './CreatePollForm';
 import EditPollForm from './EditPollForm';
 import PollReport from './PollReport';
 
-// ✅ Función para abrir WhatsApp directamente en móviles
+// ✅ Logo de la aplicación
+const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/logo.png";
+
 function openWhatsApp(message) {
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const encodedMessage = encodeURIComponent(message);
@@ -162,16 +164,21 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4 pb-20">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-neonPurple to-neonPink">
-              📊 Panel de Administración
+          <div className="flex items-center">
+            <img 
+              src={APP_LOGO} 
+              alt="Encuestas Pro" 
+              className="w-10 h-10 mr-3 rounded-full"
+            />
+            <h1 className="text-2xl font-extrabold">
+              Panel de Administración
             </h1>
           </div>
           <button
             onClick={handleLogout}
             className="px-4 py-2 bg-gray-800 text-neonRed border border-neonRed rounded-xl hover:bg-gray-700 transition flex items-center"
           >
-            <span>🔐</span> <span className="ml-2">Salir</span>
+            <span className="mr-2">Salir</span>
           </button>
         </div>
 
@@ -386,7 +393,6 @@ export default function AdminPanel() {
                   </button>
                 </div>
 
-                {/* ✅ BOTÓN ACTUALIZADO: Compartir encuesta */}
                 <div className="pt-4">
                   <button
                     onClick={() => {
@@ -423,7 +429,6 @@ Escríbenos al WhatsApp: *+57 321 5179153*`;
                   </button>
                 </div>
 
-                {/* ✅ BOTÓN ACTUALIZADO: Enviar resultados */}
                 <div className="pt-4">
                   <button
                     onClick={() => {

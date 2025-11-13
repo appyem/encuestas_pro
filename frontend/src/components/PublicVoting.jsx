@@ -4,7 +4,9 @@ import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, getDoc
 import { db } from '../lib/firebase';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
-// ✅ Detectar si el dispositivo es móvil
+// ✅ Logo de la aplicación
+const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/logo.png";
+
 function isMobileDevice() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
@@ -17,7 +19,6 @@ export default function PublicVoting({ pollIdFromRoute = null }) {
   const [votedMessage, setVotedMessage] = useState('');
   const [fingerprint, setFingerprint] = useState(null);
 
-  // ✅ Verificar dispositivo al cargar
   useEffect(() => {
     if (!isMobileDevice()) {
       setError('Esta encuesta solo está disponible en dispositivos móviles (celulares).');
@@ -36,7 +37,6 @@ export default function PublicVoting({ pollIdFromRoute = null }) {
   }, []);
 
   useEffect(() => {
-    // ✅ No cargar encuesta si no es móvil
     if (error === 'Esta encuesta solo está disponible en dispositivos móviles (celulares).') {
       return;
     }
@@ -185,8 +185,13 @@ export default function PublicVoting({ pollIdFromRoute = null }) {
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 to-black flex flex-col items-center p-4 pt-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <img 
+            src={APP_LOGO} 
+            alt="Encuestas Pro" 
+            className="w-16 h-16 rounded-full mx-auto mb-4"
+          />
           <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-neonBlue to-neonPurple">
-            🗳️ {poll.title}
+            {poll.title}
           </h1>
           <p className="mt-3 text-gray-300 text-lg">{poll.question}</p>
         </div>

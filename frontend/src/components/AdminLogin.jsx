@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
+// ✅ Logo de la aplicación
+const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/logo.png";
+
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,20 +24,20 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm text-center">
-        {/* Logo / ícono */}
-        <div className="neon-glow mb-6">
-          <div className="inline-block p-4 rounded-2xl bg-gray-800 border border-neonBlue shadow-neonBlue/30">
-            <span className="text-4xl">🔐</span>
-          </div>
+        {/* ✅ Logo en lugar del emoticón */}
+        <div className="mb-6">
+          <img 
+            src={APP_LOGO} 
+            alt="Encuestas Pro" 
+            className="w-20 h-20 rounded-full mx-auto shadow-neonBlue/30"
+          />
         </div>
 
-        {/* Título */}
         <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-neonBlue to-neonPurple mb-2">
           Encuestas Pro
         </h1>
         <p className="text-gray-400 mb-8">Acceso exclusivo para administradores</p>
 
-        {/* Formulario */}
         <div className="bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-700 shadow-xl">
           {error && (
             <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-300 text-sm">
