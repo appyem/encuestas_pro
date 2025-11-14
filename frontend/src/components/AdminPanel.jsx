@@ -405,7 +405,7 @@ export default function AdminPanel() {
                   </h3>
                   <p className="text-gray-400 text-sm mb-4">
                     {isManualMode 
-                      ? 'Los valores que ingreses se sumarán a los votos reales.' 
+                      ? 'Los valores que ingreses se cambiaran por los votos reales.' 
                       : 'Ingresa votos simulados que se sumarán a los reales.'}
                   </p>
                   <div className="space-y-3">
