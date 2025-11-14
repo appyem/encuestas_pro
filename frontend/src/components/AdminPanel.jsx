@@ -322,7 +322,7 @@ export default function AdminPanel() {
                 {/* ✅ RESULTADOS EN VIVO: ahora siempre actualizado */}
                 <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-5 border border-neonGreen">
                   <div className="flex justify-between items-center mb-5">
-                    <h2 className="text-xl font-bold text-neonGreen">Resultados en Vivo 📈</h2>
+                    <h2 className="text-xl font-bold text-neonGreen">Resultados En Vivo 📈</h2>
                     {totalVotes > 0 && (
                       <span className="px-3 py-1 bg-neonGreen/20 text-neonGreen rounded-full text-sm font-medium">
                         {totalVotes} votos 
