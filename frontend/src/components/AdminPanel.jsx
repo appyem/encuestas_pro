@@ -38,6 +38,7 @@ export default function AdminPanel() {
   const [results, setResults] = useState({});
   const [realVoteCounts, setRealVoteCounts] = useState({});
   const [pollToEdit, setPollToEdit] = useState(null);
+  const [isManualMode, setIsManualMode] = useState(false);
 
   const loadPolls = async () => {
     try {
@@ -59,6 +60,7 @@ export default function AdminPanel() {
     loadPolls();
   }, []);
 
+  // ✅ Mantener la escucha EN TODO MOMENTO (incluso en modo manual)
   useEffect(() => {
     if (currentView !== 'results' || !selectedPoll) return;
     const unsubscribe = onSnapshot(
@@ -71,11 +73,36 @@ export default function AdminPanel() {
           if (counts[vote.candidateId] !== undefined) counts[vote.candidateId] += 1;
         });
         setRealVoteCounts(counts);
-        setResults(counts);
       }
     );
     return () => unsubscribe();
   }, [selectedPoll, currentView]);
+
+  // ✅ Calcular resultados finales: baseVotes + votos reales
+  const finalVoteCounts = {};
+  if (selectedPoll) {
+    selectedPoll.candidates.forEach(cand => {
+      const base = cand.baseVotes || 0;
+      const real = realVoteCounts[cand.id] || 0;
+      finalVoteCounts[cand.id] = base + real;
+    });
+  }
+
+  const totalVotes = Object.values(finalVoteCounts).reduce((sum, val) => sum + val, 0);
+  const maxVotes = Math.max(...Object.values(finalVoteCounts), 1);
+
+  // ✅ Actualizar el estado de resultados para el formulario de edición
+  useEffect(() => {
+    if (selectedPoll) {
+      const hasManual = selectedPoll.candidates.some(cand => cand.baseVotes !== undefined);
+      setIsManualMode(hasManual);
+      const editResults = {};
+      selectedPoll.candidates.forEach(cand => {
+        editResults[cand.id] = cand.baseVotes || 0;
+      });
+      setResults(editResults);
+    }
+  }, [selectedPoll]);
 
   const handleResultChange = (candidateId, value) => {
     const numValue = value === '' ? 0 : parseInt(value, 10) || 0;
@@ -84,16 +111,34 @@ export default function AdminPanel() {
 
   const handleSaveResults = async () => {
     if (!selectedPoll) return;
+    if (!window.confirm('⚠️ ¿Estás seguro de añadir estos votos simulados? Se sumarán a los votos reales.')) {
+      return;
+    }
     try {
       const updatedCandidates = selectedPoll.candidates.map((cand) => ({
         ...cand,
-        _votes: results[cand.id] || 0,
+        baseVotes: results[cand.id] || 0
       }));
       await updateDoc(doc(db, 'polls', selectedPoll.id), { candidates: updatedCandidates });
-      alert('✅ Resultados editados guardados');
+      alert('✅ Votos simulados añadidos exitosamente');
     } catch (err) {
-      console.error('Error al guardar resultados:', err);
+      console.error('Error al guardar:', err);
       alert('❌ Error al guardar');
+    }
+  };
+
+  const handleResetToReal = async () => {
+    if (!selectedPoll) return;
+    try {
+      const updatedCandidates = selectedPoll.candidates.map((cand) => ({
+        ...cand,
+        baseVotes: 0 // ✅ Reset a 0, no eliminar
+      }));
+      await updateDoc(doc(db, 'polls', selectedPoll.id), { candidates: updatedCandidates });
+      alert('✅ Votos simulados eliminados');
+    } catch (err) {
+      console.error('Error al restaurar:', err);
+      alert('❌ Error al restaurar');
     }
   };
 
@@ -148,9 +193,6 @@ export default function AdminPanel() {
     setPollToEdit(null);
     loadPolls();
   };
-
-  const totalVotes = Object.values(realVoteCounts).reduce((sum, val) => sum + val, 0);
-  const maxVotes = Math.max(...Object.values(realVoteCounts), 1);
 
   if (loading) {
     return (
@@ -277,18 +319,19 @@ export default function AdminPanel() {
                   </div>
                 )}
 
+                {/* ✅ RESULTADOS EN VIVO: ahora siempre actualizado */}
                 <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-5 border border-neonGreen">
                   <div className="flex justify-between items-center mb-5">
                     <h2 className="text-xl font-bold text-neonGreen">Resultados en Vivo 📈</h2>
                     {totalVotes > 0 && (
                       <span className="px-3 py-1 bg-neonGreen/20 text-neonGreen rounded-full text-sm font-medium">
-                        {totalVotes} votos
+                        {totalVotes} votos 
                       </span>
                     )}
                   </div>
                   <div className="space-y-5">
                     {selectedPoll?.candidates.map((cand) => {
-                      const votes = realVoteCounts[cand.id] || 0;
+                      const votes = finalVoteCounts[cand.id] || 0;
                       const percentage = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
                       const width = totalVotes ? (votes / maxVotes) * 100 : 0;
                       return (
@@ -301,7 +344,9 @@ export default function AdminPanel() {
                           <div className="flex-1">
                             <div className="flex justify-between text-sm mb-1">
                               <span className="font-medium text-white">{cand.name}</span>
-                              <span className="text-neonYellow font-bold">{votes} ({percentage}%)</span>
+                              <span className={`font-bold ${isManualMode ? 'text-neonPink' : 'text-neonYellow'}`}>
+                                {votes} ({percentage}%)
+                              </span>
                             </div>
                             <div className="h-5 bg-gray-700 rounded-full overflow-hidden">
                               <div
@@ -359,7 +404,9 @@ export default function AdminPanel() {
                     ✏️ Edición Manual de Resultados
                   </h3>
                   <p className="text-gray-400 text-sm mb-4">
-                    Modifica los valores para simular o ajustar antes de publicar.
+                    {isManualMode 
+                      ? 'Los valores que ingreses se sumarán a los votos reales.' 
+                      : 'Ingresa votos simulados que se sumarán a los reales.'}
                   </p>
                   <div className="space-y-3">
                     {selectedPoll?.candidates.map((cand) => (
@@ -385,12 +432,22 @@ export default function AdminPanel() {
                       </div>
                     ))}
                   </div>
-                  <button
-                    onClick={handleSaveResults}
-                    className="mt-4 w-full py-3 bg-gradient-to-r from-neonYellow to-neonPink text-gray-900 font-bold rounded-xl hover:opacity-90 transition"
-                  >
-                    💾 Guardar Resultados Editados
-                  </button>
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={handleSaveResults}
+                      className="flex-1 py-3 bg-gradient-to-r from-neonYellow to-neonPink text-gray-900 font-bold rounded-xl hover:opacity-90 transition"
+                    >
+                      💾 Añadir Votos Simulados
+                    </button>
+                    {isManualMode && (
+                      <button
+                        onClick={handleResetToReal}
+                        className="flex-1 py-3 bg-gray-700 text-white font-bold rounded-xl hover:bg-gray-600 transition"
+                      >
+                        ↩️ Solo Reales
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-4">
@@ -437,7 +494,7 @@ Escríbenos al WhatsApp: *+57 321 5179153*`;
                         return;
                       }
                       const winner = selectedPoll.candidates.reduce((prev, current) =>
-                        (realVoteCounts[current.id] || 0) > (realVoteCounts[prev.id] || 0) ? current : prev
+                        (finalVoteCounts[current.id] || 0) > (finalVoteCounts[prev.id] || 0) ? current : prev
                       );
                       const startDate = new Date(selectedPoll.startDate).toLocaleDateString('es-CO', {
                         day: '2-digit', month: 'short', year: 'numeric'
@@ -447,7 +504,7 @@ Escríbenos al WhatsApp: *+57 321 5179153*`;
                       });
                       const marginOfError = totalVotes > 0 ? Math.round(1.96 * Math.sqrt(0.25 / totalVotes) * 100 * 10) / 10 : 0;
                       const resultLines = selectedPoll.candidates.map((cand) => {
-                        const votes = realVoteCounts[cand.id] || 0;
+                        const votes = finalVoteCounts[cand.id] || 0;
                         const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
                         return `• ${cand.name} (${cand.party}) – *${votes}* votos (${pct}%)`;
                       });
