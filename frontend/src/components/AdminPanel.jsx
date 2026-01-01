@@ -39,6 +39,9 @@ export default function AdminPanel() {
   const [realVoteCounts, setRealVoteCounts] = useState({});
   const [pollToEdit, setPollToEdit] = useState(null);
   const [isManualMode, setIsManualMode] = useState(false);
+  const [votersList, setVotersList] = useState([]);
+  const [showVotersModal, setShowVotersModal] = useState(false);
+  const [selectedCandidateForVoters, setSelectedCandidateForVoters] = useState(null);
 
   const loadPolls = async () => {
     try {
@@ -63,16 +66,27 @@ export default function AdminPanel() {
   // ✅ Mantener la escucha EN TODO MOMENTO (incluso en modo manual)
   useEffect(() => {
     if (currentView !== 'results' || !selectedPoll) return;
+
     const unsubscribe = onSnapshot(
       query(collection(db, 'votes'), where('pollId', '==', selectedPoll.id)),
       (snapshot) => {
+        const allVotes = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          allVotes.push({
+            id: doc.id,
+            candidateId: data.candidateId,
+            idNumber: data.idNumber || 'No registrado',
+          });
+        });
+
         const counts = {};
         selectedPoll.candidates.forEach((cand) => (counts[cand.id] = 0));
-        snapshot.forEach((doc) => {
-          const vote = doc.data();
+        allVotes.forEach((vote) => {
           if (counts[vote.candidateId] !== undefined) counts[vote.candidateId] += 1;
         });
         setRealVoteCounts(counts);
+        setVotersList(allVotes);
       }
     );
     return () => unsubscribe();
@@ -132,7 +146,7 @@ export default function AdminPanel() {
     try {
       const updatedCandidates = selectedPoll.candidates.map((cand) => ({
         ...cand,
-        baseVotes: 0 // ✅ Reset a 0, no eliminar
+        baseVotes: 0
       }));
       await updateDoc(doc(db, 'polls', selectedPoll.id), { candidates: updatedCandidates });
       alert('✅ Votos simulados eliminados');
@@ -186,6 +200,19 @@ export default function AdminPanel() {
         alert('❌ Error al eliminar la encuesta');
       }
     }
+  };
+
+  const openVotersModal = (candidate) => {
+    const filtered = votersList
+      .filter(vote => vote.candidateId === candidate.id)
+      .map(vote => vote.idNumber)
+      .filter(id => id && id !== 'No registrado');
+
+    setSelectedCandidateForVoters({
+      ...candidate,
+      voterIds: filtered.length > 0 ? filtered : ['Ningún voto con ID registrado']
+    });
+    setShowVotersModal(true);
   };
 
   const handleEditComplete = () => {
@@ -319,7 +346,7 @@ export default function AdminPanel() {
                   </div>
                 )}
 
-                {/* ✅ RESULTADOS EN VIVO: ahora siempre actualizado */}
+                {/* ✅ RESULTADOS EN VIVO */}
                 <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-5 border border-neonGreen">
                   <div className="flex justify-between items-center mb-5">
                     <h2 className="text-xl font-bold text-neonGreen">Resultados En Vivo 📈</h2>
@@ -343,7 +370,18 @@ export default function AdminPanel() {
                           />
                           <div className="flex-1">
                             <div className="flex justify-between text-sm mb-1">
-                              <span className="font-medium text-white">{cand.name}</span>
+                              <span className="font-medium text-white">
+                                {cand.name}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openVotersModal(cand);
+                                  }}
+                                  className="ml-2 text-xs bg-gray-700 hover:bg-gray-600 text-neonCyan px-2 py-1 rounded"
+                                >
+                                  👤 Ver IDs
+                                </button>
+                              </span>
                               <span className={`font-bold ${isManualMode ? 'text-neonPink' : 'text-neonYellow'}`}>
                                 {votes} ({percentage}%)
                               </span>
@@ -554,6 +592,46 @@ Escríbenos al WhatsApp: *+57 321 5179153*`;
               </div>
             )}
           </>
+        )}
+
+        {/* Modal de votantes por identificación */}
+        {showVotersModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-neonCyan bg-gray-900">
+                <h3 className="text-lg font-bold text-neonCyan">
+                  🪪 Votantes: {selectedCandidateForVoters?.name}
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Total: {selectedCandidateForVoters?.voterIds?.length || 0} identificaciones
+                </p>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 bg-gray-900/50">
+                {selectedCandidateForVoters?.voterIds?.length > 0 ? (
+                  <ul className="space-y-2">
+                    {selectedCandidateForVoters.voterIds.map((id, idx) => (
+                      <li
+                        key={idx}
+                        className="bg-gray-800/60 p-2 rounded border border-gray-700 text-white text-sm"
+                      >
+                        {id}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-center">No hay identificaciones registradas.</p>
+                )}
+              </div>
+              <div className="p-4 border-t border-gray-700 bg-gray-900">
+                <button
+                  onClick={() => setShowVotersModal(false)}
+                  className="w-full py-2 bg-neonRed text-white rounded-lg font-medium"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
