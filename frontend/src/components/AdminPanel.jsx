@@ -16,8 +16,9 @@ import CreatePollForm from './CreatePollForm';
 import EditPollForm from './EditPollForm';
 import PollReport from './PollReport';
 
+
 // ✅ Logo de la aplicación
-const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/logo.png";
+const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/ChatGPT%20Image%2031%20dic%202025%2C%2008_42_44%20p.m..png";
 
 function openWhatsApp(message) {
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -45,7 +46,8 @@ export default function AdminPanel() {
 
   const loadPolls = async () => {
     try {
-      const q = query(collection(db, 'polls'), where('creator', '==', auth.currentUser.email));
+      const tenantId = auth.currentUser?.email?.split('@')[0] + '.' + (auth.currentUser?.email?.split('@')[1]?.split('.')[0] || 'com');
+const q = query(collection(db, 'polls'), where('tenantId', '==', tenantId));
       const snapshot = await getDocs(q);
       const pollsList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setPolls(pollsList);
@@ -69,7 +71,8 @@ export default function AdminPanel() {
 
     const unsubscribe = onSnapshot(
       query(collection(db, 'votes'), where('pollId', '==', selectedPoll.id)),
-      (snapshot) => {
+     (snapshot) => {
+       where('tenantId', '==', selectedPoll.tenantId) // ✅ NUEVO
         const allVotes = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -185,6 +188,8 @@ export default function AdminPanel() {
     if (!selectedPoll) return;
     if (window.confirm('⚠️ ¿Eliminar permanentemente esta encuesta y todos sus votos? Esta acción no se puede deshacer.')) {
       try {
+
+        await logEvent(selectedPoll.id, 'deleted', auth.currentUser.email);
         await deleteDoc(doc(db, 'polls', selectedPoll.id));
         const votesQuery = query(collection(db, 'votes'), where('pollId', '==', selectedPoll.id));
         const votesSnapshot = await getDocs(votesQuery);
@@ -633,6 +638,20 @@ Escríbenos al WhatsApp: *+57 321 5179153*`;
             </div>
           </div>
         )}
+      </div>
+
+
+      {/* Enlace para solicitar acceso - visible para todos */}
+      <div className="mt-8 pt-6 border-t border-gray-800 text-center">
+        <p className="text-gray-500 text-sm">
+          ¿Eres organización y quieres usar Encuestas Pro?{' '}
+          <a 
+            href="/solicitar-acceso" 
+            className="text-neonCyan hover:underline font-medium"
+          >
+            Solicita acceso aquí
+          </a>
+        </p>
       </div>
     </div>
   );

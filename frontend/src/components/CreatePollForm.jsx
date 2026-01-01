@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
+
 export default function CreatePollForm({ onPollCreated }) {
   const [title, setTitle] = useState('');
   const [question, setQuestion] = useState('');
@@ -12,6 +13,7 @@ export default function CreatePollForm({ onPollCreated }) {
     { name: '', party: '', color: 'neonBlue', photoFile: null, photoPreview: null, photoUrl: '' }
   ]);
   const [newPollLink, setNewPollLink] = useState('');
+  const tenantId = auth.currentUser?.email?.split('@')[0] + '.' + (auth.currentUser?.email?.split('@')[1]?.split('.')[0] || 'com');
 
   const addCandidate = () => {
     setCandidates([...candidates, { name: '', party: '', color: 'neonPink', photoFile: null, photoPreview: null, photoUrl: '' }]);
@@ -98,6 +100,7 @@ export default function CreatePollForm({ onPollCreated }) {
         title,
         question,
         creator: auth.currentUser.email,
+        tenantId: tenantId, // ✅ NUEVO
         createdAt: serverTimestamp(),
         startDate: start,
         endDate: end,
@@ -107,9 +110,13 @@ export default function CreatePollForm({ onPollCreated }) {
 
       const docRef = await addDoc(collection(db, 'polls'), pollData);
       const pollId = docRef.id;
+
+      // ✅ Registrar evento de auditoría
+      const tenantId = auth.currentUser?.email?.split('@')[0] + '.' + (auth.currentUser?.email?.split('@')[1]?.split('.')[0] || 'com');
+      await logEvent(pollId, 'created', auth.currentUser.email, null, tenantId);
+
       const link = `${window.location.origin}/encuesta/${pollId}`;
       setNewPollLink(link);
-
       alert('✅ Encuesta creada exitosamente');
       onPollCreated();
     } catch (err) {

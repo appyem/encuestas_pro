@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 // ✅ Logo de la aplicación
-const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/logo.png";
+const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/ChatGPT%20Image%2031%20dic%202025%2C%2008_42_44%20p.m..png";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
