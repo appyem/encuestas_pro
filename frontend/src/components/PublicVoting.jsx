@@ -114,19 +114,11 @@ export default function PublicVoting({ pollIdFromRoute = null }) {
     loadPoll();
   }, [pollIdFromRoute, error]);
 
-  // ✅ Verificación: solo si la encuesta requiere ID
   const verifyIdAndLoadCandidates = async () => {
-    if (!poll) return;
-
-    // Si no requiere ID, saltar verificación
-    if (!poll.requiresId) {
-      setIdVerified(true);
-      return;
-    }
-
-    if (!idNumber || !fingerprint) return;
+    if (!idNumber || !poll || !fingerprint) return;
 
     try {
+      // Verificar si ya votó con este idNumber o fingerprint
       const q1 = query(
         collection(db, 'votes'),
         where('pollId', '==', poll.id),
@@ -159,33 +151,21 @@ export default function PublicVoting({ pollIdFromRoute = null }) {
     if (!poll || !fingerprint || voted || !candidate.id || !idVerified) return;
 
     try {
-      const voteData = {
+      await addDoc(collection(db, 'votes'), {
         pollId: poll.id,
         candidateId: candidate.id,
         candidateName: candidate.name,
         fingerprint: fingerprint,
+        idNumber: idNumber,
         timestamp: serverTimestamp(),
-      };
+      });
 
-      // Solo incluir idNumber si se requiere
-      if (poll.requiresId && idNumber) {
-        voteData.idNumber = idNumber;
-      }
-
-      await addDoc(collection(db, 'votes'), voteData);
       setVoted(true);
       setVotedMessage(`¡Votaste por ${candidate.name}! ✨🗳️`);
     } catch (err) {
       alert('❌ Error al registrar tu voto. Inténtalo de nuevo.');
     }
   };
-
-  // ✅ Activar verificación automáticamente si no se requiere ID
-  useEffect(() => {
-    if (poll && !poll.requiresId && !idVerified && !voted) {
-      setIdVerified(true);
-    }
-  }, [poll, idVerified, voted]);
 
   if (loading) {
     return (
@@ -243,48 +223,32 @@ export default function PublicVoting({ pollIdFromRoute = null }) {
           <p className="mt-3 text-gray-300 text-lg">{poll.question}</p>
         </div>
 
-        {/* ✅ Mostrar campo de ID solo si se requiere */}
         {!idVerified ? (
-          poll?.requiresId ? (
-            <div className="w-full max-w-md bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-neonCyan">
-              <h2 className="text-xl font-bold text-neonCyan text-center mb-4">🔐 Verificación de Identidad</h2>
-              <p className="text-gray-300 text-center mb-4">
-                Para garantizar un voto por persona, ingresa tu {poll.idLabel || 'documento de identidad'}.
-              </p>
-              <input
-                type="text"
-                value={idNumber}
-                onChange={(e) => setIdNumber(e.target.value.trim())}
-                placeholder={`Ej: ${poll.idLabel ? '12345678' : '123456789'}`}
-                className="w-full p-3 bg-gray-900 text-white rounded-xl border border-gray-600 mb-4 text-center"
-                maxLength={30}
-              />
-              <button
-                onClick={verifyIdAndLoadCandidates}
-                disabled={!idNumber || !poll || !fingerprint}
-                className={`w-full py-3 rounded-xl font-bold transition ${
-                  !idNumber || !poll || !fingerprint
-                    ? 'bg-gray-700 text-gray-500'
-                    : 'bg-gradient-to-r from-neonGreen to-neonBlue text-gray-900 hover:opacity-90'
-                }`}
-              >
-                ✅ Continuar
-              </button>
-            </div>
-          ) : (
-            // Si no requiere ID, no mostrar nada y continuar inmediatamente
-            <div className="w-full max-w-md bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-neonGreen">
-              <p className="text-center text-gray-300">
-                Esta encuesta no requiere documento de identidad. Puedes votar de forma anónima.
-              </p>
-              <button
-                onClick={verifyIdAndLoadCandidates}
-                className="w-full py-3 mt-4 bg-gradient-to-r from-neonGreen to-neonBlue text-gray-900 font-bold rounded-xl hover:opacity-90 transition"
-              >
-                ✅ Continuar a votar
-              </button>
-            </div>
-          )
+          <div className="w-full max-w-md bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-neonCyan">
+            <h2 className="text-xl font-bold text-neonCyan text-center mb-4">🔐 Verificación de Identidad</h2>
+            <p className="text-gray-300 text-center mb-4">
+              Para garantizar un voto por persona, ingresa tu número de identificación (DNI, cédula, etc.).
+            </p>
+            <input
+              type="text"
+              value={idNumber}
+              onChange={(e) => setIdNumber(e.target.value.trim())}
+              placeholder="Ej: 123456789"
+              className="w-full p-3 bg-gray-900 text-white rounded-xl border border-gray-600 mb-4 text-center"
+              maxLength={20}
+            />
+            <button
+              onClick={verifyIdAndLoadCandidates}
+              disabled={!idNumber || !poll || !fingerprint}
+              className={`w-full py-3 rounded-xl font-bold transition ${
+                !idNumber || !poll || !fingerprint
+                  ? 'bg-gray-700 text-gray-500'
+                  : 'bg-gradient-to-r from-neonGreen to-neonBlue text-gray-900 hover:opacity-90'
+              }`}
+            >
+              ✅ Continuar
+            </button>
+          </div>
         ) : (
           <div className="space-y-5">
             {poll.candidates.map((candidate) => (
