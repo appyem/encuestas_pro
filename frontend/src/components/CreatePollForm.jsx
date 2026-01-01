@@ -9,35 +9,35 @@ export default function CreatePollForm({ onPollCreated }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [candidates, setCandidates] = useState([
-    { name: '', party: '', color: 'neonBlue', photoUrl: '' }
+    { name: '', party: '', color: 'neonBlue', photoFile: null, photoPreview: null, photoUrl: '' }
   ]);
   const [newPollLink, setNewPollLink] = useState('');
 
   const addCandidate = () => {
-    setCandidates([...candidates, { name: '', party: '', color: 'neonPink', photoUrl: '' }]);
+    setCandidates([...candidates, { name: '', party: '', color: 'neonPink', photoFile: null, photoPreview: null, photoUrl: '' }]);
   };
 
   const updateCandidate = (index, field, value) => {
     const newCandidates = [...candidates];
     newCandidates[index][field] = value;
+    if (field === 'photoFile') {
+      if (value) {
+        newCandidates[index].photoPreview = URL.createObjectURL(value);
+        newCandidates[index].photoUrl = '';
+      } else {
+        newCandidates[index].photoPreview = null;
+        newCandidates[index].photoUrl = 'https://placehold.co/160?text=Sin+Foto';
+      }
+    }
     setCandidates(newCandidates);
   };
 
   const removeCandidate = (index) => {
     if (candidates.length > 2) {
+      if (candidates[index].photoPreview) {
+        URL.revokeObjectURL(candidates[index].photoPreview);
+      }
       setCandidates(candidates.filter((_, i) => i !== index));
-    }
-  };
-
-  // ✅ Validar si la URL es de imagen
-  const isValidImageUrl = (url) => {
-    if (!url) return false;
-    try {
-      const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-      const lowerUrl = url.toLowerCase();
-      return validExtensions.some(ext => lowerUrl.endsWith(ext));
-    } catch {
-      return false;
     }
   };
 
@@ -67,13 +67,33 @@ export default function CreatePollForm({ onPollCreated }) {
         alert('⚠️ Todos los candidatos deben tener nombre y partido.');
         return;
       }
-      if (!cand.photoUrl.trim() || !isValidImageUrl(cand.photoUrl)) {
-        alert('⚠️ La URL de la foto debe ser una imagen pública válida (.jpg, .png, etc.).');
+      if (!cand.photoFile && !cand.photoUrl) {
+        alert('⚠️ Debe seleccionar una imagen para cada candidato.');
         return;
       }
     }
 
     try {
+      // Convertir todas las imágenes a Base64
+      const candidatesWithBase64 = [];
+      for (const cand of candidates) {
+        let finalPhotoUrl = cand.photoUrl;
+        if (cand.photoFile) {
+          const reader = new FileReader();
+          finalPhotoUrl = await new Promise((resolve) => {
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(cand.photoFile);
+          });
+        }
+        candidatesWithBase64.push({
+          id: `cand_${Date.now()}_${candidatesWithBase64.length}`,
+          name: cand.name,
+          party: cand.party,
+          color: cand.color,
+          photoUrl: finalPhotoUrl,
+        });
+      }
+
       const pollData = {
         title,
         question,
@@ -82,13 +102,7 @@ export default function CreatePollForm({ onPollCreated }) {
         startDate: start,
         endDate: end,
         status: 'scheduled',
-        candidates: candidates.map((cand, idx) => ({
-          id: `cand_${Date.now()}_${idx}`,
-          name: cand.name,
-          party: cand.party,
-          color: cand.color,
-          photoUrl: cand.photoUrl,
-        }))
+        candidates: candidatesWithBase64,
       };
 
       const docRef = await addDoc(collection(db, 'polls'), pollData);
@@ -211,14 +225,16 @@ ${question}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                  <input
-                    type="url"
-                    placeholder="URL de la foto (pública)"
-                    value={candidate.photoUrl}
-                    onChange={(e) => updateCandidate(index, 'photoUrl', e.target.value)}
-                    className="p-2 bg-gray-800 text-white rounded-lg border border-gray-600"
-                    required
-                  />
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-1">Foto del candidato</label>
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/jpg, image/webp"
+                      onChange={(e) => updateCandidate(index, 'photoFile', e.target.files[0] || null)}
+                      className="w-full p-1 bg-gray-800 text-white rounded-lg border border-gray-600 file:text-sm file:bg-gray-700 file:border-0 file:px-2 file:py-1 file:rounded"
+                      required={!candidate.photoUrl}
+                    />
+                  </div>
                   <div className="flex items-center">
                     <label className="text-gray-400 text-sm mr-2">Color:</label>
                     <select
@@ -258,22 +274,19 @@ ${question}
                   </button>
                 )}
 
-                {/* ✅ Vista previa mejorada */}
-                {candidate.photoUrl && (
+                {/* Vista previa de imagen */}
+                {(candidate.photoPreview || candidate.photoUrl) && (
                   <div className="mt-3">
                     <label className="text-gray-400 text-sm block mb-1">Vista previa:</label>
                     <img
-                      src={candidate.photoUrl}
+                      src={candidate.photoPreview || candidate.photoUrl}
                       alt={candidate.name || "Candidato"}
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-600"
                       onError={(e) => {
                         e.currentTarget.src = 'https://placehold.co/160?text=Foto+no+válida';
                         e.currentTarget.className = 'w-16 h-16 rounded-full object-cover border-2 border-red-500';
                       }}
-                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-600"
                     />
-                    {!isValidImageUrl(candidate.photoUrl) && (
-                      <p className="text-red-400 text-xs mt-1">URL no es una imagen válida</p>
-                    )}
                   </div>
                 )}
               </div>
