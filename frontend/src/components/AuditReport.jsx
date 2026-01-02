@@ -7,7 +7,7 @@ import { db } from '../lib/firebase';
 export default function AuditReport() {
   const { pollId } = useParams();
   const [poll, setPoll] = useState(null);
-  const [auditLogs, setAuditLogs] = useState([]);
+  const [AuditLogs, setAuditLogs] = useState([]);
   const [votesCount, setVotesCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,7 +38,7 @@ export default function AuditReport() {
         }
 
         const logsQuery = query(
-        collection(db, 'audit_logs'),
+        collection(db, 'Audit_logs'),
         where('pollId', '==', pollId),
         where('tenantId', '==', poll.tenantId), // ✅ NUEVO
         orderBy('timestamp', 'asc')
@@ -133,9 +133,9 @@ export default function AuditReport() {
 
         <div className="bg-gray-800/50 rounded-2xl p-5 mb-6 border border-neonPurple">
           <h2 className="text-xl font-bold text-neonPurple mb-3">📝 Registro de Eventos</h2>
-          {auditLogs.length > 0 ? (
+          {AuditLogs.length > 0 ? (
             <ul className="space-y-3">
-              {auditLogs.map((log, idx) => (
+              {AuditLogs.map((log, idx) => (
                 <li key={idx} className="bg-gray-900/40 p-3 rounded-lg border border-gray-700">
                   <div className="flex justify-between">
                     <span className="font-mono text-neonYellow">{formatDate(log.timestamp)}</span>
