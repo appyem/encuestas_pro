@@ -6,7 +6,7 @@ import { auth } from './lib/firebase';
 import AdminLogin from './components/AdminLogin';
 import AdminPanel from './components/AdminPanel';
 import PublicVotingWrapper from './components/PublicVotingWrapper';
-import AuditReport from './components/AuditReport';
+
 import AccessRequestForm from './components/AccessRequestForm';
 
 
@@ -48,11 +48,7 @@ export default function App() {
           element={!user ? <AdminLogin /> : <Navigate to="/admin" />}
         />
 
-        <Route 
-          path="/auditoria/:pollId"
-          element={<AuditReport />} 
-          
-        />
+        
 
         <Route 
           path="/solicitar-acceso" 

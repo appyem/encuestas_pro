@@ -12,7 +12,7 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { logEvent } from '../lib/Audit';
+
 import CreatePollForm from './CreatePollForm';
 import EditPollForm from './EditPollForm';
 import PollReport from './PollReport';
@@ -174,7 +174,7 @@ export default function AdminPanel() {
     if (window.confirm('¿Seguro que deseas cerrar esta encuesta? Ya no se permitirán más votos.')) {
       try {
         await updateDoc(doc(db, 'polls', selectedPoll.id), { status: 'closed' });
-        await logEvent(selectedPoll.id, 'closed', auth.currentUser.email, null, selectedPoll.tenantId);
+       
         const updatedPolls = polls.map(poll =>
           poll.id === selectedPoll.id ? { ...poll, status: 'closed' } : poll
         );
@@ -192,7 +192,7 @@ export default function AdminPanel() {
     if (!selectedPoll) return;
     if (window.confirm('⚠️ ¿Eliminar permanentemente esta encuesta y todos sus votos? Esta acción no se puede deshacer.')) {
       try {
-        await logEvent(selectedPoll.id, 'deleted', auth.currentUser.email, null, selectedPoll.tenantId);
+        
         await deleteDoc(doc(db, 'polls', selectedPoll.id));
         const votesQuery = query(collection(db, 'votes'), where('pollId', '==', selectedPoll.id));
         const votesSnapshot = await getDocs(votesQuery);
@@ -641,8 +641,6 @@ Escríbenos al WhatsApp: *+57 321 5179153*`;
             </div>
           </div>
         )}
-
-        
       </div>
     </div>
   );
