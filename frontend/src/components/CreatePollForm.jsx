@@ -78,29 +78,28 @@ export default function CreatePollForm({ onPollCreated }) {
       }
     }
 
-    // ✅ Función auxiliar segura para cualquier formato
-    const fileToBase64 = (file) => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(file);
-      });
-    };
-
     try {
-      const candidatesWithBase64 = [];
+      // ✅ Procesar candidatos para eliminar objetos no serializables
+      const candidatesForFirestore = [];
       for (const cand of candidates) {
-        let finalPhotoUrl = cand.photoUrl;
+        let photoUrl = cand.photoUrl;
         if (cand.photoFile) {
-          finalPhotoUrl = await fileToBase64(cand.photoFile);
+          // Convertir File a Base64
+          photoUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(cand.photoFile);
+          });
         }
-        candidatesWithBase64.push({
-          id: `cand_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+
+        // ✅ SOLO guardar campos serializables
+        candidatesForFirestore.push({
+          id: `cand_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`,
           name: cand.name.trim(),
           party: cand.party.trim(),
           color: cand.color,
-          photoUrl: finalPhotoUrl,
+          photoUrl: photoUrl || 'https://placehold.co/160?text=Sin+Foto',
         });
       }
 
@@ -117,7 +116,7 @@ export default function CreatePollForm({ onPollCreated }) {
         startDate: start,
         endDate: end,
         status: 'scheduled',
-        candidates: candidatesWithBase64,
+        candidates: candidatesForFirestore, // ✅ 100% serializable
       };
 
       const docRef = await addDoc(collection(db, 'polls'), pollData);
@@ -129,7 +128,7 @@ export default function CreatePollForm({ onPollCreated }) {
       onPollCreated();
     } catch (err) {
       console.error('Error al crear encuesta:', err);
-      alert('❌ Error al crear la encuesta. Inténtalo de nuevo.');
+      alert('❌ Error al crear la encuesta. Verifique las imágenes y vuelva a intentarlo.');
     }
   };
 
