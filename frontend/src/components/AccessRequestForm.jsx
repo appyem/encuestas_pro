@@ -6,7 +6,6 @@ export default function AccessRequestForm() {
   const navigate = useNavigate();
 
   const handleContact = () => {
-    // Reemplaza con tu email real
     const email = 'gerenteappyempresa@gmail.com';
     const subject = encodeURIComponent('Solicitud de acceso a Encuestas Pro');
     const body = encodeURIComponent(
@@ -37,14 +36,14 @@ export default function AccessRequestForm() {
         >
           📧 Escribir a gerenteappyempresa@gmail.com
         </button>
-        <p className="mt-6 text-gray-500 text-sm">
+        <p className="mt-4 text-gray-500 text-sm">
           Incluye: nombre, organización, país y propósito de uso.
         </p>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="mt-6 text-neonBlue hover:underline"
         >
-          ← Volver
+          ← Volver al inicio
         </button>
       </div>
     </div>

@@ -642,18 +642,7 @@ Escríbenos al WhatsApp: *+57 321 5179153*`;
           </div>
         )}
 
-        {/* Enlace para solicitar acceso - visible para todos */}
-        <div className="mt-8 pt-6 border-t border-gray-800 text-center">
-          <p className="text-gray-500 text-sm">
-            ¿Eres organización y quieres usar Encuestas Pro?{' '}
-            <a 
-              href="/solicitar-acceso" 
-              className="text-neonCyan hover:underline font-medium"
-            >
-              Solicita acceso aquí
-            </a>
-          </p>
-        </div>
+        
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
-// ✅ Logo de la aplicación
+// ✅ Logo de la aplicación (corregido: sin espacios al final)
 const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/ChatGPT%20Image%2031%20dic%202025%2C%2008_42_44%20p.m..png";
 
 export default function AdminLogin() {
@@ -81,6 +81,19 @@ export default function AdminLogin() {
               🔑 Iniciar Sesión
             </button>
           </form>
+
+          {/* ✅ Enlace para nuevos clientes */}
+          <div className="mt-6 pt-4 border-t border-gray-700">
+            <p className="text-gray-500 text-sm">
+              ¿Eres organización y quieres usar Encuestas Pro?{' '}
+              <a 
+                href="/solicitar-acceso" 
+                className="text-neonCyan hover:underline font-medium"
+              >
+                Solicita acceso aquí
+              </a>
+            </p>
+          </div>
         </div>
 
         <p className="mt-6 text-gray-500 text-xs">
