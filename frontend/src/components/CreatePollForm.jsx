@@ -112,6 +112,7 @@ export default function CreatePollForm({ onPollCreated }) {
         question: question.trim(),
         creator: auth.currentUser.email,
         tenantId,
+        requiresId: true, 
         createdAt: serverTimestamp(),
         startDate: start,
         endDate: end,

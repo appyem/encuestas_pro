@@ -229,46 +229,33 @@ export default function PublicVoting({ pollIdFromRoute = null }) {
         </div>
 
         {!idVerified ? (
-          poll?.requiresId ? (
-            <div className="w-full max-w-md bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-neonCyan">
-              <h2 className="text-xl font-bold text-neonCyan text-center mb-4">🔐 Verificación de Identidad</h2>
-              <p className="text-gray-300 text-center mb-4">
-                Para garantizar un voto por persona, ingresa tu {poll.idLabel || 'documento de identidad'}.
-              </p>
-              <input
-                type="text"
-                value={idNumber}
-                onChange={(e) => setIdNumber(e.target.value.trim())}
-                placeholder={`Ej: ${poll.idLabel ? '12345678' : '123456789'}`}
-                className="w-full p-3 bg-gray-900 text-white rounded-xl border border-gray-600 mb-4 text-center"
-                maxLength={30}
-              />
-              <button
-                onClick={verifyIdAndLoadCandidates}
-                disabled={!idNumber || !poll || !fingerprint}
-                className={`w-full py-3 rounded-xl font-bold transition ${
-                  !idNumber || !poll || !fingerprint
-                    ? 'bg-gray-700 text-gray-500'
-                    : 'bg-gradient-to-r from-neonGreen to-neonBlue text-gray-900 hover:opacity-90'
-                }`}
-              >
-                ✅ Continuar
-              </button>
-            </div>
-          ) : (
-            <div className="w-full max-w-md bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-neonGreen">
-              <p className="text-center text-gray-300">
-                Esta encuesta no requiere documento de identidad. Puedes votar de forma anónima.
-              </p>
-              <button
-                onClick={verifyIdAndLoadCandidates}
-                className="w-full py-3 mt-4 bg-gradient-to-r from-neonGreen to-neonBlue text-gray-900 font-bold rounded-xl hover:opacity-90 transition"
-              >
-                ✅ Continuar a votar
-              </button>
-            </div>
-          )
-        ) : (
+        <div className="w-full max-w-md bg-gray-800/70 backdrop-blur-sm rounded-2xl p-6 border border-neonCyan">
+          <h2 className="text-xl font-bold text-neonCyan text-center mb-4">🔐 Verificación de Identidad</h2>
+          <p className="text-gray-300 text-center mb-4">
+            Para garantizar un voto por persona, ingresa tu {poll.idLabel || 'documento de identidad'}.
+          </p>
+          <input
+            type="text"
+            value={idNumber}
+            onChange={(e) => setIdNumber(e.target.value.trim())}
+            placeholder={`Ej: ${poll.idLabel ? '12345678' : '123456789'}`}
+            className="w-full p-3 bg-gray-900 text-white rounded-xl border border-gray-600 mb-4 text-center"
+            maxLength={30}
+            required
+          />
+          <button
+            onClick={verifyIdAndLoadCandidates}
+            disabled={!idNumber || !poll || !fingerprint}
+            className={`w-full py-3 rounded-xl font-bold transition ${
+              !idNumber || !poll || !fingerprint
+                ? 'bg-gray-700 text-gray-500'
+                : 'bg-gradient-to-r from-neonGreen to-neonBlue text-gray-900 hover:opacity-90'
+            }`}
+          >
+            ✅ Continuar
+          </button>
+        </div>
+      ) : (
           <div className="space-y-5">
             {poll.candidates.map((candidate) => (
               <div
