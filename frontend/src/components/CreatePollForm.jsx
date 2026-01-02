@@ -41,20 +41,9 @@ export default function CreatePollForm({ onPollCreated }) {
     }
   };
 
-  // ✅ Función auxiliar segura para convertir archivo a Base64
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Verificar autenticación
     if (!auth.currentUser) {
       alert('❌ Debes iniciar sesión para crear encuestas.');
       return;
@@ -89,6 +78,16 @@ export default function CreatePollForm({ onPollCreated }) {
       }
     }
 
+    // ✅ Función auxiliar segura para cualquier formato
+    const fileToBase64 = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    };
+
     try {
       const candidatesWithBase64 = [];
       for (const cand of candidates) {
@@ -112,7 +111,8 @@ export default function CreatePollForm({ onPollCreated }) {
         question: question.trim(),
         creator: auth.currentUser.email,
         tenantId,
-        requiresId: true, 
+        requiresId: true,
+        idLabel: 'Documento de identidad',
         createdAt: serverTimestamp(),
         startDate: start,
         endDate: end,
