@@ -12,12 +12,12 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { logEvent } from '../lib/Audit';
 import CreatePollForm from './CreatePollForm';
 import EditPollForm from './EditPollForm';
 import PollReport from './PollReport';
 
-
-// ✅ Logo de la aplicación
+// ✅ Logo de la aplicación (sin espacio al final)
 const APP_LOGO = "https://raw.githubusercontent.com/appyem/im-genes-candidatos-/refs/heads/main/ChatGPT%20Image%2031%20dic%202025%2C%2008_42_44%20p.m..png";
 
 function openWhatsApp(message) {
@@ -47,7 +47,7 @@ export default function AdminPanel() {
   const loadPolls = async () => {
     try {
       const tenantId = auth.currentUser?.email?.split('@')[0] + '.' + (auth.currentUser?.email?.split('@')[1]?.split('.')[0] || 'com');
-const q = query(collection(db, 'polls'), where('tenantId', '==', tenantId));
+      const q = query(collection(db, 'polls'), where('tenantId', '==', tenantId));
       const snapshot = await getDocs(q);
       const pollsList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setPolls(pollsList);
@@ -70,9 +70,12 @@ const q = query(collection(db, 'polls'), where('tenantId', '==', tenantId));
     if (currentView !== 'results' || !selectedPoll) return;
 
     const unsubscribe = onSnapshot(
-      query(collection(db, 'votes'), where('pollId', '==', selectedPoll.id)),
-     (snapshot) => {
-       where('tenantId', '==', selectedPoll.tenantId) // ✅ NUEVO
+      query(
+        collection(db, 'votes'),
+        where('pollId', '==', selectedPoll.id),
+        where('tenantId', '==', selectedPoll.tenantId) // ✅ CORRECTO: dentro de query()
+      ),
+      (snapshot) => {
         const allVotes = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -171,6 +174,7 @@ const q = query(collection(db, 'polls'), where('tenantId', '==', tenantId));
     if (window.confirm('¿Seguro que deseas cerrar esta encuesta? Ya no se permitirán más votos.')) {
       try {
         await updateDoc(doc(db, 'polls', selectedPoll.id), { status: 'closed' });
+        await logEvent(selectedPoll.id, 'closed', auth.currentUser.email, null, selectedPoll.tenantId);
         const updatedPolls = polls.map(poll =>
           poll.id === selectedPoll.id ? { ...poll, status: 'closed' } : poll
         );
@@ -188,8 +192,7 @@ const q = query(collection(db, 'polls'), where('tenantId', '==', tenantId));
     if (!selectedPoll) return;
     if (window.confirm('⚠️ ¿Eliminar permanentemente esta encuesta y todos sus votos? Esta acción no se puede deshacer.')) {
       try {
-
-        await logEvent(selectedPoll.id, 'deleted', auth.currentUser.email);
+        await logEvent(selectedPoll.id, 'deleted', auth.currentUser.email, null, selectedPoll.tenantId);
         await deleteDoc(doc(db, 'polls', selectedPoll.id));
         const votesQuery = query(collection(db, 'votes'), where('pollId', '==', selectedPoll.id));
         const votesSnapshot = await getDocs(votesQuery);
@@ -638,20 +641,19 @@ Escríbenos al WhatsApp: *+57 321 5179153*`;
             </div>
           </div>
         )}
-      </div>
 
-
-      {/* Enlace para solicitar acceso - visible para todos */}
-      <div className="mt-8 pt-6 border-t border-gray-800 text-center">
-        <p className="text-gray-500 text-sm">
-          ¿Eres organización y quieres usar Encuestas Pro?{' '}
-          <a 
-            href="/solicitar-acceso" 
-            className="text-neonCyan hover:underline font-medium"
-          >
-            Solicita acceso aquí
-          </a>
-        </p>
+        {/* Enlace para solicitar acceso - visible para todos */}
+        <div className="mt-8 pt-6 border-t border-gray-800 text-center">
+          <p className="text-gray-500 text-sm">
+            ¿Eres organización y quieres usar Encuestas Pro?{' '}
+            <a 
+              href="/solicitar-acceso" 
+              className="text-neonCyan hover:underline font-medium"
+            >
+              Solicita acceso aquí
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
