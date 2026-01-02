@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
-
 export default function CreatePollForm({ onPollCreated }) {
   const [title, setTitle] = useState('');
   const [question, setQuestion] = useState('');
@@ -42,8 +41,24 @@ export default function CreatePollForm({ onPollCreated }) {
     }
   };
 
+  // ✅ Función auxiliar segura para convertir archivo a Base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Verificar autenticación
+    if (!auth.currentUser) {
+      alert('❌ Debes iniciar sesión para crear encuestas.');
+      return;
+    }
 
     if (!title.trim() || !question.trim()) {
       alert('⚠️ Debe ingresar título y pregunta.');
@@ -75,32 +90,26 @@ export default function CreatePollForm({ onPollCreated }) {
     }
 
     try {
-      // Convertir todas las imágenes a Base64
       const candidatesWithBase64 = [];
       for (const cand of candidates) {
         let finalPhotoUrl = cand.photoUrl;
         if (cand.photoFile) {
-          const reader = new FileReader();
-          finalPhotoUrl = await new Promise((resolve) => {
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(cand.photoFile);
-          });
+          finalPhotoUrl = await fileToBase64(cand.photoFile);
         }
         candidatesWithBase64.push({
-          id: `cand_${Date.now()}_${candidatesWithBase64.length}`,
-          name: cand.name,
-          party: cand.party,
+          id: `cand_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: cand.name.trim(),
+          party: cand.party.trim(),
           color: cand.color,
           photoUrl: finalPhotoUrl,
         });
       }
 
-      // ✅ Calcular tenantId una sola vez
-      const tenantId = auth.currentUser?.email?.split('@')[0] + '.' + (auth.currentUser?.email?.split('@')[1]?.split('.')[0] || 'com');
+      const tenantId = auth.currentUser.email.split('@')[0] + '.' + (auth.currentUser.email.split('@')[1].split('.')[0] || 'com');
 
       const pollData = {
-        title,
-        question,
+        title: title.trim(),
+        question: question.trim(),
         creator: auth.currentUser.email,
         tenantId,
         createdAt: serverTimestamp(),
@@ -113,15 +122,13 @@ export default function CreatePollForm({ onPollCreated }) {
       const docRef = await addDoc(collection(db, 'polls'), pollData);
       const pollId = docRef.id;
 
-     
-
       const link = `${window.location.origin}/encuesta/${pollId}`;
       setNewPollLink(link);
       alert('✅ Encuesta creada exitosamente');
       onPollCreated();
     } catch (err) {
       console.error('Error al crear encuesta:', err);
-      alert('❌ Error al crear la encuesta.');
+      alert('❌ Error al crear la encuesta. Inténtalo de nuevo.');
     }
   };
 
